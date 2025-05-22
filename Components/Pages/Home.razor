@@ -1,0 +1,58 @@
+﻿@page "/"
+@using TechStax.Models
+@using TechStax.Services
+@inject IJobDataService JobDataService
+
+<PageTitle>Home</PageTitle>
+
+<h3>Top Technologies in “Software Engineer” Jobs</h3>
+
+@if (_loading)
+{
+    <p>Loading…</p>
+}
+else if (_stats.Count == 0)
+{
+    <p>No results found. Try again shortly.</p>
+}
+else
+{
+    <p>Currently loaded @JobDataService.GetAllPostings().Count job postings.</p>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Technology</th>
+                <th>Count</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var stat in _stats)
+            {
+                <tr>
+                    <td>
+                        <NavLink href="@($"/tech/details/{Uri.EscapeDataString(stat.Name)}")">
+                            @stat.Name
+                        </NavLink>
+                    </td>
+                    <td>@stat.Count</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private bool _loading = true;
+    private List<TechnologyStat> _stats = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+        // scrape and rebuild the map once
+        await JobDataService.RefreshAsync(cts.Token);
+        // pull the top stats
+        _stats = JobDataService.GetTechnologyStats()
+                 .ToList();
+        _loading = false;
+    }
+}

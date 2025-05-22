@@ -1,0 +1,90 @@
+﻿@page "/tech/details/{tech}"
+@using Microsoft.AspNetCore.Components
+@using System.Text.RegularExpressions
+@using System.Net
+@using TechStax.Models
+@using TechStax.Services
+@inject IJobDataService JobDataService
+
+<h3>Jobs mentioning “@tech”</h3>
+
+@if (_jobs is null)
+{
+    <p>Loading…</p>
+}
+else if (!_jobs.Any())
+{
+    <p>No jobs found for “@tech”.</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Company</th>
+                <th>Location</th>
+                <th>Description</th>
+                <th>Pay Range</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var job in _jobs)
+            {
+                <tr>
+                    <td>@job.Title</td>
+                    <td>@job.Company</td>
+                    <td>@job.Location</td>
+                    <td>
+                        <details>
+                            <summary>
+                                @((MarkupString)Highlight(
+                                    job.Description.Length > 200
+                                    ? job.Description.Substring(0, 200) + "…"
+                                    : job.Description
+                                    ))
+                            </summary>
+                            <!-- Full description also rendered with highlighting -->
+                            <p>@((MarkupString)Highlight(job.Description))</p>
+                        </details>
+                    </td>
+                    <td>@job.PayRange</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    [Parameter] public string tech { get; set; }
+    private List<JobPosting> _jobs;
+
+    protected override void OnInitialized()
+    {
+        // Load postings for the selected technology from the shared data service
+        _jobs = JobDataService.GetPostingsForTechnology(tech).ToList();
+    }
+
+    private string Highlight(string text)
+    {
+        if (string.IsNullOrEmpty(tech) || string.IsNullOrEmpty(text))
+            return WebUtility.HtmlEncode(text);
+
+        // HTML-encode entire text first
+        var encoded = WebUtility.HtmlEncode(text);
+        // Build a whole-word regex for the technology name
+        var pattern = $"\\b({Regex.Escape(tech)})\\b";
+        // Inline styling for high visibility: bright coral background, white bold text
+        var replacement =
+            "<span style=\"background:#ff6f61;color:#fff;font-weight:bold;" +
+            "padding:0 2px;border-radius:2px;\">$1</span>";
+
+        // Perform a case-insensitive replacement
+        return Regex.Replace(
+            encoded,
+            pattern,
+            replacement,
+            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant
+        );
+    }
+}

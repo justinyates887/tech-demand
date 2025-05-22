@@ -1,0 +1,57 @@
+﻿@page "/jobs"
+@using TechStax.Models
+@using TechStax.Services
+@inject IJobDataService JobDataService
+
+<h3>All Job Postings</h3>
+
+@if (_loading)
+{
+        <p>Loading…</p>
+}
+else if (_jobs.Count == 0)
+{
+        <p>No job postings available.</p>
+}
+else
+{
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Company</th>
+                    <th>Location</th>
+                    <th>Pay Range</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var job in _jobs)
+            {
+                        <tr>
+                            <td>@job.Title</td>
+                            <td>@job.Company</td>
+                            <td>@job.Location</td>
+                            <td>@job.PayRange</td>
+                        </tr>
+            }
+            </tbody>
+        </table>
+}
+
+@code {
+    private bool _loading = true;
+    private List<JobPosting> _jobs = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+
+        // Ensure the cache is fresh (if you haven’t already refreshed elsewhere)
+        await JobDataService.RefreshAsync(cts.Token);
+
+        // Grab them all
+        _jobs = JobDataService.GetAllPostings().ToList();
+
+        _loading = false;
+    }
+}
