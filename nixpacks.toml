@@ -1,0 +1,31 @@
+# nixpacks.toml
+
+# 1) Install phase - pull in the .NET 8 SDK
+[phases.setup]
+commands = [
+  # Download and install .NET 8.0 SDK to /opt/dotnet
+  "curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --version 8.0.302 --install-dir /opt/dotnet"
+]
+
+# 2) Export the DOTNET_ROOT so that `dotnet` is on PATH
+[phases.preInstall]
+commands = [
+  "export DOTNET_ROOT=/opt/dotnet",
+  "export PATH=/opt/dotnet:$PATH"
+]
+
+# 3) Restore NuGet packages
+[phases.install]
+commands = [
+  "dotnet restore TechStax.csproj"
+]
+
+# 4) Build & publish into /app/publish
+[phases.build]
+commands = [
+  "dotnet publish TechStax.csproj -c Release -o /app/publish"
+]
+
+# 5) Start your Blazor Server app
+[phases.start]
+command = "dotnet /app/publish/TechStax.dll"
