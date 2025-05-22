@@ -117,8 +117,8 @@ namespace TechStax.Services
         /// </summary>
         private class JobDataCache
         {
-            public List<JobPosting> AllPostings { get; set; }
-            public Dictionary<string, List<JobPosting>> Map { get; set; }
+            public List<JobPosting>? AllPostings { get; set; }
+            public Dictionary<string, List<JobPosting>>? Map { get; set; }
         }
     }
 }
